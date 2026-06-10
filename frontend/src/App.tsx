@@ -7,6 +7,8 @@ import { ResumeUpload } from './components/ResumeUpload';
 import { CandidateModal } from './components/CandidateModal';
 import { JobForm } from './components/JobForm';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 function App() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
@@ -22,14 +24,14 @@ function App() {
       setLoading(true);
       setError(null);
       try {
-        const jobsRes = await fetch('http://localhost:5000/api/jobs');
+        const jobsRes = await fetch(`${API_BASE_URL}/api/jobs`);
         if (!jobsRes.ok) throw new Error("Failed to fetch jobs");
         const jobsData = await jobsRes.json();
         setJobs(jobsData);
 
         // If a job is selected, fetch its candidates, else fetch all candidates
         if (selectedJobId) {
-          const candRes = await fetch(`http://localhost:5000/api/jobs/${selectedJobId}/candidates`);
+          const candRes = await fetch(`${API_BASE_URL}/api/jobs/${selectedJobId}/candidates`);
           if (!candRes.ok) throw new Error("Failed to fetch candidates");
           const candData = await candRes.json();
           setCandidates(candData);
@@ -37,7 +39,7 @@ function App() {
           // Flatten all candidates for dashboard stats
           const allCandidates: Candidate[] = [];
           for (const job of jobsData) {
-            const candRes = await fetch(`http://localhost:5000/api/jobs/${job.id}/candidates`);
+            const candRes = await fetch(`${API_BASE_URL}/api/jobs/${job.id}/candidates`);
             if (candRes.ok) {
               const candData = await candRes.json();
               allCandidates.push(...candData);
@@ -65,7 +67,7 @@ function App() {
   // API handler: create new job
   const handleCreateJob = async (jobData: Omit<Job, 'id' | 'createdAt' | 'status'>) => {
     try {
-      const response = await fetch('http://localhost:5000/api/jobs', {
+      const response = await fetch(`${API_BASE_URL}/api/jobs`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(jobData),
@@ -85,7 +87,7 @@ function App() {
   // API handler: delete job
   const handleDeleteJob = async (jobId: string) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/jobs/${jobId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/jobs/${jobId}`, {
         method: 'DELETE'
       });
 
@@ -105,7 +107,7 @@ function App() {
   // API handler: update candidate status (Kanban drag & drop)
   const handleMoveCandidate = async (candidateId: string, newStatus: Candidate['status']) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/candidates/${candidateId}/status`, {
+      const response = await fetch(`${API_BASE_URL}/api/candidates/${candidateId}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus })
@@ -130,7 +132,7 @@ function App() {
   // API handler: delete candidate
   const handleDeleteCandidate = async (candidateId: string) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/candidates/${candidateId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/candidates/${candidateId}`, {
         method: 'DELETE'
       });
 

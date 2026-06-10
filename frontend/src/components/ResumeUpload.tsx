@@ -54,7 +54,8 @@ export const ResumeUpload: React.FC<ResumeUploadProps> = ({ jobId, onUploadSucce
     }
 
     try {
-      const response = await fetch(`http://localhost:5000/api/jobs/${jobId}/upload`, {
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const response = await fetch(`${API_BASE_URL}/api/jobs/${jobId}/upload`, {
         method: 'POST',
         body: formData,
       });
