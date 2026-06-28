@@ -334,17 +334,17 @@ body {
 
 .pipeline-board {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(var(--cols, 5), 1fr);
   gap: 1.2rem;
   align-items: start;
   overflow-x: auto;
   padding-bottom: 1rem;
-  min-height: 500px;
+  min-height: 350px;
 }
 
 @media (max-width: 1200px) {
   .pipeline-board {
-    grid-template-columns: repeat(5, 260px);
+    grid-template-columns: repeat(var(--cols, 5), 260px);
   }
 }
 
@@ -877,10 +877,26 @@ body {
 /* Fixes and Responsiveness Additions */
 
 .pipeline-layout {
-  display: grid;
-  grid-template-columns: 1fr 340px;
+  display: flex;
+  flex-direction: column;
   gap: 2rem;
-  align-items: start;
+}
+
+.pipeline-top-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  align-items: stretch;
+}
+
+.target-profile-card {
+  background: var(--bg-card);
+  padding: 1.5rem;
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
 }
 
 .job-form-container {
@@ -942,8 +958,15 @@ body {
 
 /* Mobile Responsiveness Improvements */
 @media (max-width: 1024px) {
-  .pipeline-layout {
+  .pipeline-top-row {
     grid-template-columns: 1fr;
+  }
+  .pipeline-board {
+    grid-template-columns: 1fr !important;
+    min-height: auto;
+  }
+  .pipeline-column {
+    min-height: auto;
   }
 }
 

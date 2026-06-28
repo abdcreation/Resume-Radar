@@ -4,6 +4,7 @@ import { CandidateCard } from './CandidateCard';
 
 interface PipelineBoardProps {
   candidates: Candidate[];
+  stages?: Candidate['status'][];
   onSelectCandidate: (candidate: Candidate) => void;
   onMoveCandidate: (candidateId: string, newStatus: Candidate['status']) => void;
   onDeleteCandidate: (candidateId: string) => void;
@@ -13,6 +14,7 @@ const STAGES: Candidate['status'][] = ["Applied", "Screening", "Interview", "Off
 
 export const PipelineBoard: React.FC<PipelineBoardProps> = ({ 
   candidates, 
+  stages = STAGES,
   onSelectCandidate, 
   onMoveCandidate,
   onDeleteCandidate
@@ -42,8 +44,8 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
   };
 
   return (
-    <div className="pipeline-board">
-      {STAGES.map(stage => {
+    <div className="pipeline-board" style={{ '--cols': stages.length } as React.CSSProperties}>
+      {stages.map(stage => {
         const stageCandidates = candidates.filter(c => c.status === stage);
         
         return (

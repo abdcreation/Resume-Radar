@@ -267,22 +267,14 @@ function App() {
               </div>
 
               <div className="pipeline-layout">
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                  <PipelineBoard 
-                    candidates={candidates}
-                    onSelectCandidate={setSelectedCandidate}
-                    onMoveCandidate={handleMoveCandidate}
-                    onDeleteCandidate={handleDeleteCandidate}
-                  />
-                </div>
-                
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                {/* 1st Row: Upload CV and Target Profile Details side-by-side */}
+                <div className="pipeline-top-row">
                   <ResumeUpload 
                     jobId={selectedJob.id}
                     onUploadSuccess={handleUploadSuccess}
                   />
 
-                  <div style={{ background: 'var(--bg-card)', padding: '1.5rem', borderRadius: 'var(--border-radius)', border: '1px solid var(--border-color)', fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
+                  <div className="target-profile-card">
                     <h4 style={{ fontFamily: 'var(--font-display)', color: 'var(--text-primary)', fontSize: '1rem', marginBottom: '0.8rem' }}>Target Profile Details</h4>
                     <p><strong>Required Experience:</strong> {selectedJob.experience} {selectedJob.experience === 1 ? 'year' : 'years'}+</p>
                     <p><strong>Education:</strong> {selectedJob.education}</p>
@@ -293,6 +285,28 @@ function App() {
                       ))}
                     </div>
                   </div>
+                </div>
+
+                {/* 2nd Row: Applied, Screening, Interview */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                  <PipelineBoard 
+                    candidates={candidates}
+                    stages={["Applied", "Screening", "Interview"]}
+                    onSelectCandidate={setSelectedCandidate}
+                    onMoveCandidate={handleMoveCandidate}
+                    onDeleteCandidate={handleDeleteCandidate}
+                  />
+                </div>
+
+                {/* 3rd Row: Offered, Rejected */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                  <PipelineBoard 
+                    candidates={candidates}
+                    stages={["Offered", "Rejected"]}
+                    onSelectCandidate={setSelectedCandidate}
+                    onMoveCandidate={handleMoveCandidate}
+                    onDeleteCandidate={handleDeleteCandidate}
+                  />
                 </div>
               </div>
             </div>
