@@ -7,9 +7,18 @@ import { ResumeUpload } from './components/ResumeUpload';
 import { CandidateModal } from './components/CandidateModal';
 import { JobForm } from './components/JobForm';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const getInitialApiUrl = () => {
+  const saved = localStorage.getItem('ats_api_url');
+  if (saved) return saved;
+  if (import.meta.env.PROD) {
+    return import.meta.env.VITE_API_URL || window.location.origin;
+  }
+  return import.meta.env.VITE_API_URL || 'http://localhost:5000';
+};
 
 function App() {
+  const [apiUrl, setApiUrl] = useState(getInitialApiUrl());
+  const [retryCount, setRetryCount] = useState(0);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
@@ -24,14 +33,14 @@ function App() {
       setLoading(true);
       setError(null);
       try {
-        const jobsRes = await fetch(`${API_BASE_URL}/api/jobs`);
+        const jobsRes = await fetch(`${apiUrl}/api/jobs`);
         if (!jobsRes.ok) throw new Error("Failed to fetch jobs");
         const jobsData = await jobsRes.json();
         setJobs(jobsData);
 
         // If a job is selected, fetch its candidates, else fetch all candidates
         if (selectedJobId) {
-          const candRes = await fetch(`${API_BASE_URL}/api/jobs/${selectedJobId}/candidates`);
+          const candRes = await fetch(`${apiUrl}/api/jobs/${selectedJobId}/candidates`);
           if (!candRes.ok) throw new Error("Failed to fetch candidates");
           const candData = await candRes.json();
           setCandidates(candData);
@@ -39,7 +48,7 @@ function App() {
           // Flatten all candidates for dashboard stats
           const allCandidates: Candidate[] = [];
           for (const job of jobsData) {
-            const candRes = await fetch(`${API_BASE_URL}/api/jobs/${job.id}/candidates`);
+            const candRes = await fetch(`${apiUrl}/api/jobs/${job.id}/candidates`);
             if (candRes.ok) {
               const candData = await candRes.json();
               allCandidates.push(...candData);
@@ -49,14 +58,14 @@ function App() {
         }
       } catch (err: any) {
         console.error(err);
-        setError("Could not connect to the backend server. Make sure it is running on port 5000.");
+        setError(`Could not connect to the backend server at "${apiUrl}". Please verify the address.`);
       } finally {
         setLoading(false);
       }
     };
 
     fetchInitialData();
-  }, [selectedJobId]);
+  }, [selectedJobId, apiUrl, retryCount]);
 
   // Handle job selection and redirect to pipeline view
   const handleSelectJob = (jobId: string) => {
@@ -67,7 +76,7 @@ function App() {
   // API handler: create new job
   const handleCreateJob = async (jobData: Omit<Job, 'id' | 'createdAt' | 'status'>) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/jobs`, {
+      const response = await fetch(`${apiUrl}/api/jobs`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(jobData),
@@ -87,7 +96,7 @@ function App() {
   // API handler: delete job
   const handleDeleteJob = async (jobId: string) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/jobs/${jobId}`, {
+      const response = await fetch(`${apiUrl}/api/jobs/${jobId}`, {
         method: 'DELETE'
       });
 
@@ -107,7 +116,7 @@ function App() {
   // API handler: update candidate status (Kanban drag & drop)
   const handleMoveCandidate = async (candidateId: string, newStatus: Candidate['status']) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/candidates/${candidateId}/status`, {
+      const response = await fetch(`${apiUrl}/api/candidates/${candidateId}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus })
@@ -132,7 +141,7 @@ function App() {
   // API handler: delete candidate
   const handleDeleteCandidate = async (candidateId: string) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/candidates/${candidateId}`, {
+      const response = await fetch(`${apiUrl}/api/candidates/${candidateId}`, {
         method: 'DELETE'
       });
 
@@ -188,11 +197,48 @@ function App() {
 
       {/* Global connection error indicator */}
       {error && (
-        <div style={{ padding: '1rem 2rem', background: 'var(--danger-glow)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: 'var(--border-radius)', color: '#f87171', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>⚠️ {error}</div>
-          <button className="btn btn-secondary" onClick={() => setSelectedJobId(selectedJobId)} style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem' }}>
-            Retry
-          </button>
+        <div style={{ padding: '1.5rem 2rem', background: 'var(--danger-glow)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: 'var(--border-radius)', color: '#f87171', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>⚠️ {error}</div>
+            <button className="btn btn-secondary" onClick={() => setRetryCount(prev => prev + 1)} style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem' }}>
+              Retry Connection
+            </button>
+          </div>
+          <div style={{ borderTop: '1px solid rgba(239, 68, 68, 0.1)', paddingTop: '1rem', display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Configure Backend API URL:</span>
+            <input 
+              type="text" 
+              className="form-input" 
+              value={apiUrl} 
+              onChange={(e) => setApiUrl(e.target.value)}
+              placeholder="e.g. https://api.yourdomain.com"
+              style={{ flex: 1, minWidth: '200px', padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}
+            />
+            <button 
+              className="btn btn-primary" 
+              onClick={() => {
+                localStorage.setItem('ats_api_url', apiUrl);
+                setRetryCount(prev => prev + 1);
+              }}
+              style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem' }}
+            >
+              Save & Retry
+            </button>
+            {localStorage.getItem('ats_api_url') && (
+              <button 
+                className="btn btn-secondary" 
+                onClick={() => {
+                  localStorage.removeItem('ats_api_url');
+                  const resetUrl = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? window.location.origin : 'http://localhost:5000');
+                  setApiUrl(resetUrl);
+                  setRetryCount(prev => prev + 1);
+                }}
+                style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem', color: 'var(--text-secondary)' }}
+              >
+                Reset Default
+              </button>
+            )}
+          </div>
         </div>
       )}
 
@@ -271,6 +317,7 @@ function App() {
                 <div className="pipeline-top-row">
                   <ResumeUpload 
                     jobId={selectedJob.id}
+                    apiUrl={apiUrl}
                     onUploadSuccess={handleUploadSuccess}
                   />
 

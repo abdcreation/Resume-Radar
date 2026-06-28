@@ -3,10 +3,11 @@ import type { Candidate } from '../types';
 
 interface ResumeUploadProps {
   jobId: string;
+  apiUrl: string;
   onUploadSuccess: (candidates: Candidate[]) => void;
 }
 
-export const ResumeUpload: React.FC<ResumeUploadProps> = ({ jobId, onUploadSuccess }) => {
+export const ResumeUpload: React.FC<ResumeUploadProps> = ({ jobId, apiUrl, onUploadSuccess }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -54,8 +55,7 @@ export const ResumeUpload: React.FC<ResumeUploadProps> = ({ jobId, onUploadSucce
     }
 
     try {
-      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const response = await fetch(`${API_BASE_URL}/api/jobs/${jobId}/upload`, {
+      const response = await fetch(`${apiUrl}/api/jobs/${jobId}/upload`, {
         method: 'POST',
         body: formData,
       });

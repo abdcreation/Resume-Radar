@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
 const pdfParse = require('pdf-parse');
+const path = require('path');
 const { readDb, writeDb } = require('./db');
 const { parseResume, scoreResumeAgainstJob } = require('./parser');
 
@@ -232,6 +233,23 @@ app.delete('/api/candidates/:id', (req, res) => {
     res.json({ message: "Candidate deleted successfully" });
   } catch (error) {
     res.status(500).json({ error: "Failed to delete candidate" });
+  }
+});
+
+// Serve static frontend files if they exist in production/distribution folders
+const frontendDistPath = path.join(__dirname, '../frontend/dist');
+app.use(express.static(frontendDistPath));
+
+// Fallback all non-API GET requests to index.html for SPA router support
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api')) {
+    return next();
+  }
+  const indexPath = path.join(frontendDistPath, 'index.html');
+  if (require('fs').existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else {
+    res.send("ATS Backend is running. Frontend build not found.");
   }
 });
 
